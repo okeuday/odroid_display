@@ -263,6 +263,6 @@ unsigned char utf8_to_hd44780u_0(unsigned char const ** const str)
         ++(*str);
         return invalid;
     }
-    return missing; /* not UTF-8 data */
+    return missing; /* not UTF-8 data (or a continuation byte) */
 }
 
