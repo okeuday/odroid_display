@@ -102,13 +102,15 @@ void display_16_2_initialize()
 
 }
 
-void display_16_2_update(unsigned char const * const request)
+void display_16_2_update(unsigned char const * const request,
+                         uint32_t const request_size)
 {
     uint8_t const * const leds = (uint8_t *) request;
     uint8_t const leds_on = leds[0];
     uint8_t const leds_off = leds[1];
     uint8_t const leds_toggle = leds[2];
     unsigned char const * message = &(request[3]);
+    unsigned char const * message_end = &(request[request_size]);
     int i, j, reposition;
     unsigned char c;
 
@@ -146,11 +148,11 @@ void display_16_2_update(unsigned char const * const request)
     }
 
     /* update LCD */
-    for (i = 0; i < display_16_2_rows; i++)
+    for (i = 0; i < display_16_2_rows && message != message_end; i++)
     {
         reposition = 0;
         lcdPosition(display_handle, 0, i);
-        for (j = 0; j < display_16_2_columns; j++)
+        for (j = 0; j < display_16_2_columns && message != message_end; j++)
         {
             c = utf8_to_hd44780u_0(&message);
             if (c == '\0')
@@ -199,8 +201,8 @@ static void request(cloudi_instance_t * api,
             //          1 byte for (7) status LEDs to off,
             //          1 byte for (7) status LEDs to toggle
             //          32 byte message (null characters are ignored),
-            assert(request_size >= (3 + 32) && request_size <= (3 + 32 * 3));
-            display_16_2_update((unsigned char *) request);
+            assert(request_size >= 3 && request_size <= (3 + 32 * 3));
+            display_16_2_update((unsigned char *) request, request_size);
             break;
         default:
             assert(0);
