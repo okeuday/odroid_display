@@ -51,6 +51,8 @@
 #include <assert.h>
 #include <unistd.h>
 
+#include "utf8_to_hd44780u.h"
+
 static int display_handle = 0;
  
 static int const display_16_2_rows = 2;
@@ -102,39 +104,15 @@ void display_16_2_initialize()
 
 void display_16_2_update(unsigned char const * const request)
 {
-    uint8_t const * const leds = (uint8_t *) &(request[display_16_2_rows *
-                                                       display_16_2_columns]);
+    uint8_t const * const leds = (uint8_t *) request;
     uint8_t const leds_on = leds[0];
     uint8_t const leds_off = leds[1];
     uint8_t const leds_toggle = leds[2];
+    unsigned char * message = &(request[3]);
     int i, j, reposition;
     unsigned char c;
 
-    // update LCD
-    for (i = 0; i < display_16_2_rows; i++)
-    {
-        reposition = 0;
-        lcdPosition(display_handle, 0, i);
-        for (j = 0; j < display_16_2_columns; j++)
-        {
-            c = request[i * display_16_2_columns + j];
-            if (c == '\0')
-            {
-                reposition = 1;
-            }
-            else
-            {
-                if (reposition)
-                {
-                    reposition = 0;
-                    lcdPosition(display_handle, j, i);
-                }
-                lcdPutchar(display_handle, c);
-            }
-        }
-    }
-
-    // update LEDs
+    /* update LEDs */
     if (leds_on != 0)
     {
         for (i = 0; i < display_16_2_port_led_count; i++)
@@ -166,6 +144,31 @@ void display_16_2_update(unsigned char const * const request)
             }
         }
     }
+
+    /* update LCD */
+    for (i = 0; i < display_16_2_rows; i++)
+    {
+        reposition = 0;
+        lcdPosition(display_handle, 0, i);
+        for (j = 0; j < display_16_2_columns; j++)
+        {
+            c = utf8_to_hd44780u_0(&message);
+            if (c == '\0')
+            {
+                reposition = 1;
+            }
+            else
+            {
+                if (reposition)
+                {
+                    reposition = 0;
+                    lcdPosition(display_handle, j, i);
+                }
+                lcdPutchar(display_handle, c);
+            }
+        }
+    }
+
 }
 
 typedef enum
@@ -192,11 +195,11 @@ static void request(cloudi_instance_t * api,
     switch (display)
     {
         case display_16_2:
-            // request: 32 byte message (null characters are ignored),
-            //          1 byte for (7) status LEDs to on,
+            // request: 1 byte for (7) status LEDs to on,
             //          1 byte for (7) status LEDs to off,
             //          1 byte for (7) status LEDs to toggle
-            assert(request_size == 35);
+            //          32 byte message (null characters are ignored),
+            assert(request_size >= (3 + 32) && request_size <= (3 + 32 * 3));
             display_16_2_update((unsigned char *) request);
             break;
         default:

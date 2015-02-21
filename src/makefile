@@ -8,9 +8,14 @@ CLOUDI_LDFLAGS=-L$(CLOUDI_PATH)/api/c/ -Wl,-rpath,$(CLOUDI_PATH)/api/c/ -lcloudi
 CFLAGS=-g -O0 $(CLOUDI_CFLAGS)
 LDFLAGS=-lwiringPi -lwiringPiDev -lpthread $(CLOUDI_LDFLAGS)
 
-OBJS = main.o
+OBJS = \
+    utf8_to_hd44780u.o \
+    main.o
 
 all: odroid_display
+
+utf8_to_hd44780u.c: utf8_to_hd44780u.h
+main.c: utf8_to_hd44780u.h
 
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS) 
