@@ -45,7 +45,7 @@
 #include <lcd.h>
 
 #include <string.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <assert.h>
@@ -246,7 +246,7 @@ int main(int argc, char ** argv)
         }
     }
     result = cloudi_initialize(&api, 0);
-    assert(result == cloudi_success)
+    assert(result == cloudi_success);
     result = cloudi_subscribe(&api, "display", &request);
     assert(result == cloudi_success);
     wiringPiSetup();
