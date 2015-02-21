@@ -106,8 +106,8 @@ void display_16_2_update(unsigned char const * const request,
                          uint32_t const request_size)
 {
     uint8_t const * const leds = (uint8_t *) request;
-    uint8_t const leds_on = leds[0];
-    uint8_t const leds_off = leds[1];
+    uint8_t const leds_off = leds[0];
+    uint8_t const leds_on = leds[1];
     uint8_t const leds_toggle = leds[2];
     unsigned char const * message = &(request[3]);
     unsigned char const * message_end = &(request[request_size]);
@@ -115,31 +115,20 @@ void display_16_2_update(unsigned char const * const request,
     unsigned char c;
 
     /* update LEDs */
-    if (leds_on != 0)
+    if (leds_off || leds_on || leds_toggle)
     {
         for (i = 0; i < display_16_2_port_led_count; i++)
         {
-            if ((1 << i) & leds_on)
-            {
-                digitalWrite(display_16_2_port_led[i], 1);
-            }
-        }
-    }
-    if (leds_off != 0)
-    {
-        for (i = 0; i < display_16_2_port_led_count; i++)
-        {
-            if ((1 << i) & leds_off)
+            j = 1 << i;
+            if (j & leds_off)
             {
                 digitalWrite(display_16_2_port_led[i], 0);
             }
-        }
-    }
-    if (leds_toggle != 0)
-    {
-        for (i = 0; i < display_16_2_port_led_count; i++)
-        {
-            if ((1 << i) & leds_toggle)
+            else if (j & leds_on)
+            {
+                digitalWrite(display_16_2_port_led[i], 1);
+            }
+            else if (j & leds_toggle)
             {
                 digitalWrite(display_16_2_port_led[i],
                              1 - digitalRead(display_16_2_port_led[i]));
@@ -197,8 +186,8 @@ static void request(cloudi_instance_t * api,
     switch (display)
     {
         case display_16_2:
-            // request: 1 byte for (7) status LEDs to on,
-            //          1 byte for (7) status LEDs to off,
+            // request: 1 byte for (7) status LEDs to off,
+            //          1 byte for (7) status LEDs to on,
             //          1 byte for (7) status LEDs to toggle
             //          32 byte message (null characters are ignored),
             assert(request_size >= 3 && request_size <= (3 + 32 * 3));
