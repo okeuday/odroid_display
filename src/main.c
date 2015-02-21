@@ -108,7 +108,7 @@ void display_16_2_update(unsigned char const * const request)
     uint8_t const leds_on = leds[0];
     uint8_t const leds_off = leds[1];
     uint8_t const leds_toggle = leds[2];
-    unsigned char * message = &(request[3]);
+    unsigned char const * message = &(request[3]);
     int i, j, reposition;
     unsigned char c;
 
