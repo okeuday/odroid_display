@@ -102,7 +102,8 @@ void display_16_2_initialize()
 
 void display_16_2_update(unsigned char const * const request)
 {
-    uint8_t const * const leds = (uint8_t *) &(request[rows * columns]);
+    uint8_t const * const leds = (uint8_t *) &(request[display_16_2_rows *
+                                                       display_16_2_columns]);
     uint8_t const leds_on = leds[0];
     uint8_t const leds_off = leds[1];
     uint8_t const leds_toggle = leds[2];
