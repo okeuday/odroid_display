@@ -3,7 +3,7 @@
 CC=gcc
 CLOUDI_VERSION=1.4.0
 CLOUDI_PATH=/usr/local/lib/cloudi-$(CLOUDI_VERSION)
-CLOUDI_CFLAGS=-I$(CLOUDI_PATH)/api/c/
+CLOUDI_CFLAGS=-I$(CLOUDI_PATH)/api/c/ -fexceptions
 CLOUDI_LDFLAGS=-L$(CLOUDI_PATH)/api/c/ -Wl,-rpath,$(CLOUDI_PATH)/api/c/ -lcloudi
 CFLAGS=-g -O0 $(CLOUDI_CFLAGS)
 LDFLAGS=-lwiringPi -lwiringPiDev -lpthread $(CLOUDI_LDFLAGS)
@@ -24,5 +24,5 @@ clean:
 	rm -f odroid_display $(OBJS)
 
 odroid_display: $(OBJS)
-	$(CC) -fexceptions -o odroid_display $(OBJS) $(LDFLAGS)
+	$(CC) -o odroid_display $(OBJS) $(LDFLAGS)
 
