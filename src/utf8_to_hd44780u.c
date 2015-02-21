@@ -57,19 +57,9 @@ unsigned char utf8_to_hd44780u_0(unsigned char const ** const str)
     }
     else if (c0 <= 0x7d)
     {
-        switch (c0)
-        {
-            case 0x5c: /* '\' is N/A */
-                return missing;
-            case 'p': /* use taller */
-                return 0xf0;
-            case 'q': /* use taller */
-                return 0xf1;
-            case 'j': /* use taller */
-                return 0xea;
-            default:
-                return c0;
-        }
+        if (c0 == 0x5c) /* '\' is N/A */
+            return missing;
+        return c0;
     }
     else if (c0 == 0xc2)
     {
