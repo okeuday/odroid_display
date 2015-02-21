@@ -77,6 +77,8 @@ unsigned char utf8_to_hd44780u_0(unsigned char const ** const str)
                 return 0xdf;
             case 0xb5: /* µ */
                 return 0xe4;
+            case 0xb7: /* · */
+                return 0xa5;
             default:
                 return invalid;
         }
@@ -188,7 +190,11 @@ unsigned char utf8_to_hd44780u_0(unsigned char const ** const str)
         ++(*str);
         c2 = **str;
         ++(*str);
-        if (c1 == 0x86)
+        if (c1 == 0x82 && c2 == 0xa4)
+        {
+            return 0xed; /* ₤ (lira currency) */
+        }
+        else if (c1 == 0x86)
         {
             switch (c2)
             {
@@ -200,10 +206,6 @@ unsigned char utf8_to_hd44780u_0(unsigned char const ** const str)
                     return invalid;
             }
         }
-        else if (c1 == 0x82 && c2 == 0xa4)
-        {
-            return 0xed; /* ₤ (lira currency) */
-        }
         else if (c1 == 0x88)
         {
             switch (c2)
@@ -214,6 +216,18 @@ unsigned char utf8_to_hd44780u_0(unsigned char const ** const str)
                     return 0xe8;
                 case 0x9e: /* ∞ (infinity) */
                     return 0xf3;
+                default:
+                    return invalid;
+            }
+        }
+        else if (c1 == 0x8c)
+        {
+            switch (c2)
+            {
+                case 0x9c: /* ⌜ (top left corner) */
+                    return 0xa2;
+                case 0x9f: /* ⌟ (bottom right corner) */
+                    return 0xa3;
                 default:
                     return invalid;
             }
