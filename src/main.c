@@ -55,7 +55,7 @@ static int display_handle = 0;
  
 static int const display_16_2_rows = 2;
 static int const display_16_2_columns = 16;
-static int const * const display_16_2_port_led = {
+static int const display_16_2_port_led[] = {
     21, // GPIOX.BIT4(#101)
     22, // GPIOX.BIT3(#100)
     23, // GPIOX.BIT11(#108):PWM_B
