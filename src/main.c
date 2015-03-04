@@ -54,6 +54,7 @@
 #include "utf8_to_hd44780u.h"
 
 static int display_handle = 0;
+static unsigned char (*display_character)(unsigned char const ** const);
  
 static int const display_16_2_rows = 2;
 static int const display_16_2_columns = 16;
@@ -69,7 +70,7 @@ static int const display_16_2_port_led[] = {
 static int const display_16_2_port_led_count = sizeof(display_16_2_port_led) /
                                                sizeof(display_16_2_port_led[0]);
  
-void display_16_2_initialize()
+void display_16_2_initialize(int const hd44780u_character_set)
 {
     int const bus = 4; // interface 4 bit mode
     int const port_lcd_rs = 7; // GPIOY.BIT3(#83)
@@ -100,6 +101,16 @@ void display_16_2_initialize()
         pullUpDnControl(port_button1, PUD_OFF);
     }
 
+    switch (hd44780u_character_set)
+    {
+        case 0:
+            display_character = &utf8_to_hd44780u_0;
+            break;
+        default:
+            fprintf(stderr, "hd44780u character set unknown: %d\n",
+                    hd44780u_character_set);
+            exit(1);
+    }
 }
 
 void display_16_2_update(unsigned char const * const request,
@@ -143,7 +154,7 @@ void display_16_2_update(unsigned char const * const request,
         lcdPosition(display_handle, 0, i);
         for (j = 0; j < display_16_2_columns && message != message_end; j++)
         {
-            c = utf8_to_hd44780u_0(&message);
+            c = (*display_character)(&message);
             if (c == '\0')
             {
                 reposition = 1;
@@ -164,10 +175,10 @@ void display_16_2_update(unsigned char const * const request,
 
 typedef enum
 {
-    display_16_2
+    display_16_2_a00
 } display_t;
 
-static display_t display = display_16_2;
+static display_t display = display_16_2_a00;
 
 static void request(cloudi_instance_t * api,
                     int const command,
@@ -185,7 +196,7 @@ static void request(cloudi_instance_t * api,
 {
     switch (display)
     {
-        case display_16_2:
+        case display_16_2_a00:
             // request: 1 byte for (7) status LEDs to off,
             //          1 byte for (7) status LEDs to on,
             //          1 byte for (7) status LEDs to toggle
@@ -204,7 +215,7 @@ static void request(cloudi_instance_t * api,
 
 static void help(char const * const command)
 {
-    fprintf(stderr, "Usage: %s [-h] [-d 16_2]\n", command);
+    fprintf(stderr, "Usage: %s [-h] [-d 16_2 | 16_2_a00]\n", command);
 }
 
 extern char * optarg;
@@ -221,9 +232,10 @@ int main(int argc, char ** argv)
         switch (result)
         {
             case 'd':
-                if (strcmp("16_2", optarg) == 0)
+                if ((strcmp("16_2", optarg) == 0) ||
+                    (strcmp("16_2_a00", optarg) == 0))
                 {
-                    display = display_16_2;
+                    display = display_16_2_a00;
                 }
                 else
                 {
@@ -246,8 +258,8 @@ int main(int argc, char ** argv)
     wiringPiSetup();
     switch (display)
     {
-        case display_16_2:
-            display_16_2_initialize();
+        case display_16_2_a00:
+            display_16_2_initialize(0);
             break;
         default:
             assert(0);

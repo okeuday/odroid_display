@@ -61,3 +61,5 @@ TODO
 ----
 
 * Add UTF8 Japanese characters
+* Add support for the A02 character set (?)
+
