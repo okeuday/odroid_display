@@ -56,8 +56,8 @@
 static int display_handle = 0;
 static unsigned char (*display_character)(unsigned char const ** const);
  
-static int const display_16_2_rows = 2;
-static int const display_16_2_columns = 16;
+#define display_16_2_rows 2
+#define display_16_2_columns 16
 static int const display_16_2_port_led[] = {
     21, // GPIOX.BIT4(#101)
     22, // GPIOX.BIT3(#100)
@@ -182,8 +182,8 @@ void display_16_2_merge(unsigned char const * const request,
     unsigned char message[display_16_2_columns * display_16_2_rows] =
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    unsigned char * message_p;
-    unsigned char * message_end;
+    unsigned char const * message_p;
+    unsigned char const * message_end;
     uint32_t message_size = 0;
     int i, j, reposition;
     unsigned char c;
