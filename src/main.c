@@ -173,6 +173,106 @@ void display_16_2_update(unsigned char const * const request,
 
 }
 
+void display_16_2_merge(unsigned char const * const request,
+                        uint32_t const request_size)
+{
+    uint8_t leds_off = 0;
+    uint8_t leds_on = 0;
+    uint8_t leds_toggle = 0;
+    unsigned char message[display_16_2_columns * display_16_2_rows] =
+        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    unsigned char * message_p;
+    unsigned char * message_end;
+    uint32_t message_size = 0;
+    int i, j, reposition;
+    unsigned char c;
+
+    /* merge separate requests for the display
+     * (last entry is on top)
+     */
+    for (i = 0; i < request_size; i += message_size)
+    {
+        message_size = *((uint32_t *) &request[i]) - 3;
+        i += 4;
+        leds_off |= *((uint8_t *) &request[i]);
+        i++;
+        leds_on |= *((uint8_t *) &request[i]);
+        i++;
+        leds_toggle |= *((uint8_t *) &request[i]);
+        i++;
+        message_p = &request[i];
+        message_end = &message_p[message_size];
+        for (j = 0; message_p != message_end; j++)
+        {
+            c = (*display_character)(&message_p);
+            if (c == '\0')
+                continue;
+            if (c == ' ')
+            {
+                if (message[j] == '\0')
+                {
+                    message[j] = c;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                message[j] = c;
+            }
+        }
+    }
+
+    /* update LEDs */
+    if (leds_off || leds_on || leds_toggle)
+    {
+        for (i = 0; i < display_16_2_port_led_count; i++)
+        {
+            j = 1 << i;
+            if (j & leds_off)
+            {
+                digitalWrite(display_16_2_port_led[i], 0);
+            }
+            else if (j & leds_on)
+            {
+                digitalWrite(display_16_2_port_led[i], 1);
+            }
+            else if (j & leds_toggle)
+            {
+                digitalWrite(display_16_2_port_led[i],
+                             1 - digitalRead(display_16_2_port_led[i]));
+            }
+        }
+    }
+
+    /* update LCD */
+    for (i = 0; i < display_16_2_rows; i++)
+    {
+        reposition = 0;
+        lcdPosition(display_handle, 0, i);
+        for (j = 0; j < display_16_2_columns; j++)
+        {
+            c = message[i * display_16_2_columns + j];
+            if (c == '\0')
+            {
+                reposition = 1;
+            }
+            else
+            {
+                if (reposition)
+                {
+                    reposition = 0;
+                    lcdPosition(display_handle, j, i);
+                }
+                lcdPutchar(display_handle, c);
+            }
+        }
+    }
+}
+
 typedef enum
 {
     display_16_2_a00
@@ -180,19 +280,19 @@ typedef enum
 
 static display_t display = display_16_2_a00;
 
-static void request(cloudi_instance_t * api,
-                    int const command,
-                    char const * const name,
-                    char const * const pattern,
-                    void const * const request_info,
-                    uint32_t const request_info_size,
-                    void const * const request,
-                    uint32_t const request_size,
-                    uint32_t timeout,
-                    int8_t priority,
-                    char const * const trans_id,
-                    char const * const pid,
-                    uint32_t const pid_size)
+static void display_request(cloudi_instance_t * api,
+                            int const command,
+                            char const * const name,
+                            char const * const pattern,
+                            void const * const request_info,
+                            uint32_t const request_info_size,
+                            void const * const request,
+                            uint32_t const request_size,
+                            uint32_t timeout,
+                            int8_t priority,
+                            char const * const trans_id,
+                            char const * const pid,
+                            uint32_t const pid_size)
 {
     switch (display)
     {
@@ -203,6 +303,40 @@ static void request(cloudi_instance_t * api,
             //          32 byte message (null characters are ignored),
             assert(request_size >= 3 && request_size <= (3 + 32 * 3));
             display_16_2_update((unsigned char *) request, request_size);
+            break;
+        default:
+            assert(0);
+            break;
+    }
+    // no response is necessary
+    cloudi_return(api, command, name, pattern, "", 0, "", 0,
+                  timeout, trans_id, pid, pid_size);
+}
+
+static void display_merge_request(cloudi_instance_t * api,
+                                  int const command,
+                                  char const * const name,
+                                  char const * const pattern,
+                                  void const * const request_info,
+                                  uint32_t const request_info_size,
+                                  void const * const request,
+                                  uint32_t const request_size,
+                                  uint32_t timeout,
+                                  int8_t priority,
+                                  char const * const trans_id,
+                                  char const * const pid,
+                                  uint32_t const pid_size)
+{
+    switch (display)
+    {
+        case display_16_2_a00:
+            // request: 4 byte unsigned size (of the inner request)
+            //          1 byte for (7) status LEDs to off,
+            //          1 byte for (7) status LEDs to on,
+            //          1 byte for (7) status LEDs to toggle
+            //          32 byte message (null characters are ignored),
+            //          (repeated as necessary)
+            display_16_2_merge((unsigned char *) request, request_size);
             break;
         default:
             assert(0);
@@ -253,7 +387,11 @@ int main(int argc, char ** argv)
     }
     result = cloudi_initialize(&api, 0);
     assert(result == cloudi_success);
-    result = cloudi_subscribe(&api, "display", &request);
+    result = cloudi_subscribe(&api, "display",
+                              &display_request);
+    assert(result == cloudi_success);
+    result = cloudi_subscribe(&api, "display/merge",
+                              &display_merge_request);
     assert(result == cloudi_success);
     wiringPiSetup();
     switch (display)
