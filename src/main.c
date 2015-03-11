@@ -206,20 +206,7 @@ void display_16_2_merge(unsigned char const * const request,
         for (j = 0; message_p != message_end; j++)
         {
             c = (*display_character)(&message_p);
-            if (c == '\0')
-                continue;
-            if (c == ' ')
-            {
-                if (message[j] == '\0')
-                {
-                    message[j] = c;
-                }
-                else
-                {
-                    continue;
-                }
-            }
-            else
+            if (c != '\0')
             {
                 message[j] = c;
             }
