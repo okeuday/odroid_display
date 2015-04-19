@@ -6,6 +6,8 @@ This example shows how CloudI can isolate C dependencies for hardware so
 higher-level data processing can run decoupled (keeping the fault-tolerance
 constraints on both pieces of source code separate).
 
+Compilation requires the Odroid-C1 [wiringPi library fork](https://github.com/hardkernel/wiringPi).
+
 Usage
 -----
 
