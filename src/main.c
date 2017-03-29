@@ -267,8 +267,7 @@ typedef enum
 
 static display_t display = display_16_2_a00;
 
-static void display_request(cloudi_instance_t * api,
-                            int const command,
+static void display_request(int const command,
                             char const * const name,
                             char const * const pattern,
                             void const * const request_info,
@@ -279,7 +278,9 @@ static void display_request(cloudi_instance_t * api,
                             int8_t priority,
                             char const * const trans_id,
                             char const * const pid,
-                            uint32_t const pid_size)
+                            uint32_t const pid_size,
+                            void * state,
+                            cloudi_instance_t * api)
 {
     switch (display)
     {
@@ -300,8 +301,7 @@ static void display_request(cloudi_instance_t * api,
                   timeout, trans_id, pid, pid_size);
 }
 
-static void display_merge_request(cloudi_instance_t * api,
-                                  int const command,
+static void display_merge_request(int const command,
                                   char const * const name,
                                   char const * const pattern,
                                   void const * const request_info,
@@ -312,7 +312,9 @@ static void display_merge_request(cloudi_instance_t * api,
                                   int8_t priority,
                                   char const * const trans_id,
                                   char const * const pid,
-                                  uint32_t const pid_size)
+                                  uint32_t const pid_size,
+                                  void * state,
+                                  cloudi_instance_t * api)
 {
     switch (display)
     {
@@ -372,7 +374,7 @@ int main(int argc, char ** argv)
                 return 1;
         }
     }
-    result = cloudi_initialize(&api, 0);
+    result = cloudi_initialize(&api, 0, 0);
     assert(result == cloudi_success);
     result = cloudi_subscribe(&api, "display",
                               &display_request);
